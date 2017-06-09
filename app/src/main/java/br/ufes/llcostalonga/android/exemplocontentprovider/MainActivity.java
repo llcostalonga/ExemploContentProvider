@@ -21,23 +21,32 @@
 package br.ufes.llcostalonga.android.exemplocontentprovider;
 
 import android.Manifest;
+import android.app.LoaderManager;
 import android.content.ContentResolver;
 import android.content.CursorLoader;
+import android.content.Loader;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 
-public class MainActivity extends AppCompatActivity   {
+public class MainActivity extends AppCompatActivity  implements LoaderManager.LoaderCallbacks<Cursor>, View.OnClickListener  {
 
-   private static final int PERMISSIONS_REQUEST_READ_CONTACTS = 100;
+     private static final int PERMISSIONS_REQUEST_READ_CONTACTS = 100;
+
+    private boolean firstTimeLoaded=false;
 
     private TextView textViewQueryResult;
+    private Button buttonLoadData;
+
+
     private ContentResolver contentResolver;
 
     private CursorLoader mContactsLoader;
@@ -61,46 +70,25 @@ public class MainActivity extends AppCompatActivity   {
 
 
         textViewQueryResult = (TextView) findViewById(R.id.textViewQueryResult);
+        buttonLoadData = (Button) findViewById(R.id.buttonLoadData);
+
+        buttonLoadData.setOnClickListener(this);
 
         // Check the SDK version and whether the permission is already granted or not.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, PERMISSIONS_REQUEST_READ_CONTACTS);
             //After this point you wait for callback in onRequestPermissionsResult(int, String[], int[]) overriden method
-        } else {
-            // Android version is lesser than 6.0 or the permission is already granted.
-            runQuery();
         }
 
 
     }
 
     public void runQuery(){
-        ContentResolver contentResolver=getContentResolver();
-
-        //Alternativa 1
-         Cursor cursor=contentResolver.query(                 //select
-                ContactsContract.Contacts.CONTENT_URI,       //from
-                mColumnProjection,                           //where
-                null,
-                null,
-                null);
-
-       //Alternativa 2
-        /*Cursor cursor=contentResolver.query(                 //select
-                ContactsContract.Contacts.CONTENT_URI,       //from
-                mColumnProjection,                           //where
-                mSelectionClause,
-                mSelectionArguments,
-                null);*/
-
-        if(cursor!=null && cursor.getCount()>0){
-            StringBuilder stringBuilderQueryResult=new StringBuilder("");
-            while (cursor.moveToNext()){
-                stringBuilderQueryResult.append(cursor.getString(0)+" , "+cursor.getString(1)+" , "+cursor.getString(2)+"\n");
-            }
-            textViewQueryResult.setText(stringBuilderQueryResult.toString());
+        if(firstTimeLoaded==false){
+            getLoaderManager().initLoader(1, null, this);
+            firstTimeLoaded=true;
         }else{
-            textViewQueryResult.setText("No Contacts in device");
+            getLoaderManager().restartLoader(1,null,this);
         }
     }
 
@@ -118,5 +106,43 @@ public class MainActivity extends AppCompatActivity   {
     }
 
 
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
 
+        if (id == 1) {
+            return new CursorLoader(MainActivity.this, ContactsContract.Contacts.CONTENT_URI,
+                    mColumnProjection, null, null, null);
+        }
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+        if (cursor != null && cursor.getCount() > 0) {
+            StringBuilder stringBuilderQueryResult = new StringBuilder("");
+            //cursor.moveToFirst();
+            while (cursor.moveToNext()) {
+                stringBuilderQueryResult.append(cursor.getString(0) + " , " + cursor.getString(1) + " , " + cursor.getString(2) + "\n");
+            }
+            textViewQueryResult.setText(stringBuilderQueryResult.toString());
+        } else {
+            textViewQueryResult.setText("No Contacts in device");
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.buttonLoadData: runQuery();
+                break;
+            default:
+                break;
+        }
+
+    }
 }
