@@ -14,6 +14,9 @@
    3) Com o aplicativo rodando, adicione um novo contato. O que aconteceu?
    4) Modifique o contentResolver.query() para usar o mSelectionClause e mSelectionArguments.
 
+   Parte 2: Uso do loader baseado em
+   https://www.youtube.com/watch?v=eNW1d8tiXmQ&list=PLfuE3hOAeWhb7kirY4rBtTLVF73jEXwG4&index=3
+
  */
 
 
